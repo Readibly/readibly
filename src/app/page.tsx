@@ -1,103 +1,92 @@
+import Link from "next/link";
 import Image from "next/image";
+import { Button } from "@/components/ui/button";
+import { ArrowRight, Eye, Headphones, BookOpen } from "lucide-react";
 
 export default function Home() {
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
-
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+    // hero section
+    <div className="flex flex-col">
+      <section className="w-full py-12 md:py-24 lg:py-18 bg-gray-50">
+        <div className="container px-4 md:px-6">
+          <div className="grid gap-6 lg:grid-cols-2 lg:gap-12 items-center">
+            <div className="space-y-4 pl-4">
+              <h1 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl lg:text-6xl text-gray-800">
+                Membaca Lebih Mudah Untuk Semua
+              </h1>
+              <p className = "text-muted-foreground font-normal med:text-xl text-gray-600">
+                Readibly membantu penyandang disleksia membaca dengan lebih mudah menggunakan teknologi eye-tracking dan Text-to-Speech yang adaptif
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4 py-4">
+                <Link href="/services">
+                  <Button className="bg-blue-400 hover:bg-blue-300">
+                    Mulai Membaca <ArrowRight className="ml-2 h-4">
+                    </ArrowRight>
+                  </Button>
+                </Link>
+                <Link href="/about">
+                  <Button className="bg-blue-400 hover:bg-blue-300">
+                    Pelajari Lebih Lanjut
+                  </Button>
+                </Link>
+              </div>
+            </div>
+            <div className="relative h-[800px] lg:h-[400px] rounded-xl overflow-hidden">
+              <Image src="/img/P_Hero.png" alt="hero" layout="fill" objectFit="cover" priority>              
+              </Image>
+            </div>
+          </div>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+      </section>
+
+      {/* Feature Section */}
+      <section className="w-full py-12 md:py-24 bg-gray-50">
+        <div className="container px-4 md:px-6">
+          <div className="flex flex-col items-center justify-center space-y-4 text-center">
+            <div className="space-y-4">
+              <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl">
+                Fitur Utama
+              </h2>
+              <p className="max-w-[700px] text-muted-foreground font-normal text-xl gap-8">
+                Teknologi yang membantu penyandang disleksia membaca dengan lebih mudah dan nyaman.
+              </p>
+            </div>
+          </div>
+          <div className="mx-auto grid max -w-5xl items-center gap-6 py-12 lg:grid-cols-3">
+            <div className="flex flex-col items-center space-y-4 rounded-lg border p-6 shadow-sm">
+              <div className="rounded-full bg-primary/10 p-3">
+                <Eye className="h-6 w-6 text-primary"></Eye>
+              </div>
+              <h3 className="text-xl font-bold">
+                Eye-Tracking
+              </h3>
+              <p className="text-center text-muted-foreground">
+                Teknologi yang melacak gerakan mata untuk menyesuaikan kecepatan membaca.
+              </p>
+            </div> 
+            <div className="flex flex-col items-center space-y-4 rounded-lg border p-6 shadow-sm">
+              <div className="rounded-full bg-primary/10 p-3">
+                <Headphones className="h-6 w-6"></Headphones>
+              </div>
+              <h3 className="text-xl font-bold">
+                Text-to-Speech
+              </h3>
+              <p className="text-center text-muted-foreground">
+                Mengubah teks menjadi suara dengan kualitas tinggi untuk membantu pemahaman.
+              </p>
+            </div>
+            <div className="flex flex-col items-center space-y-4 rounded-lg border p-6 shadow-sm">
+              <div className="rounded-full bg-primary/10 p-3">
+                <BookOpen className="h-6 w-6 text-primary"></BookOpen>
+              </div>
+              <h3 className="text-xl font-bold">
+                Desain Ramah Disleksia
+              </h3>
+              <p className="text-center text-muted-foreground">Menggunakan font OpenDyslexic dan warna yang ramah untuk penyandang disleksia.</p>
+            </div>
+          </div>
+        </div>
+      </section>
     </div>
   );
 }
