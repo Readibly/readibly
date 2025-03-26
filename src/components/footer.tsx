@@ -7,12 +7,11 @@ function Footer() {
             <div className="container flex flex-col md:flex-row items-center justify-center gap-4">
                 <div className="flex flex-col md:flex-row items-center gap-4 md:gap-8">
                     <Link href="/" className="flex items-center gap-4">
-                        <BookOpen className="h-5 w-5 text-primary">
-                            <span className="font-bold">Readibly</span>
+                        <BookOpen className="h-5 w-5">
                         </BookOpen>
                     </Link>
                     <p className="text-sm text-muted-foreground text-center md:text-left">
-                        @Copyrigth 2025 Readibly, All Rights Reserved to hackateunnn team.
+                        @Copyrigth 2025 Readibly.
                     </p>
                 </div>
                 <div className="flex items-center gap-4">

@@ -20,7 +20,7 @@ function Navbar() {
         <div className="container flex h-16 justify-between">
             <div className="flex items-center gap-12">
                 <Link href="/" className="flex items-center gap-2">
-                    <span className="font-bold pl-6 text-xl hidden md:inline-block">Readibly</span>
+                    <span className="font-bold pl-6 text-xl hidden md:inline-block text-purple-600">Readibly</span>
                 </Link>
             </div>
 
@@ -31,15 +31,17 @@ function Navbar() {
                                 key={route.href}
                                 href={route.href}
                                 className={cn(
-                                    "text-muted-foreground hover:text-blue-500",
-                                    pathname === route.href? "text-blue-500":"text-muted-foreground",
+                                    "text-muted-foreground font-medium hover:text-primary",
+                                    pathname === route.href? "text-primary":"text-muted-foreground",
                                 )}
                             >
                                 {route.label}
                             </Link>
                         ))}
                 </nav>
-                <Button className="hidden md:flex">Masuk</Button>
+                <Link href="/auth">
+                    <Button className="hidden md:flex bg-purple-600 text-white hover:bg-purple-500">Masuk</Button>
+                </Link>
                 <Button variant="ghost" size="icon" className="md:hidden" onClick={() => setIsMenuOpen (!isMenuOpen)}>
                     {isMenuOpen? <X className="h-6 w-6"/> : <Menu className="h-6 w-6"/>}
                 </Button>
