@@ -1,6 +1,5 @@
 "use client";
 
-import { Eye, Headphones, BookOpen } from "lucide-react";
 
 interface FeatureCardProps {
   icon: React.ReactNode;
@@ -33,7 +32,7 @@ export default function FeatureCard({ icon, title, description, is3D = false }: 
           <div className="rounded-full bg-primary/2 p-3">
             {icon}
           </div>
-          <h3 className="text-3xl font-bold text-purple-600">
+          <h3 className="text-3xl font-medium text-[#7678ed]">
             {title}
           </h3>
           <p className="text-center text-muted-foreground">
@@ -49,7 +48,7 @@ export default function FeatureCard({ icon, title, description, is3D = false }: 
       <div className="rounded-full bg-primary/2 p-3">
         {icon}
       </div>
-      <h3 className="text-3xl font-bold text-purple-600">
+      <h3 className="text-3xl font-medium text-[#7678ed]">
         {title}
       </h3>
       <p className="text-center text-muted-foreground">
