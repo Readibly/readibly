@@ -16,6 +16,7 @@ const PDFReader = () => {
     const [speaking, setSpeaking] = useState(false);
     const [speechSynthesis, setSpeechSynthesis] = useState<SpeechSynthesis | null>(null);
     const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
+    const [clickedWords, setClickedWords] = useState<Set<string>>(new Set());
 
     useEffect(() => {
         // Initialize speech synthesis
@@ -145,6 +146,24 @@ const PDFReader = () => {
         setLineHeight(prev => Math.max(1.5, Math.min(2.2, prev + delta)));
     };
 
+    const handleWordClick = (word: string) => {
+        speakWord(word);
+        setClickedWords(prev => {
+            const newSet = new Set(prev);
+            newSet.add(word);
+            return newSet;
+        });
+        
+        // Remove the highlight after 1 second
+        setTimeout(() => {
+            setClickedWords(prev => {
+                const newSet = new Set(prev);
+                newSet.delete(word);
+                return newSet;
+            });
+        }, 1000);
+    };
+
     return (
         <div className="w-full max-w-6xl mx-auto p-4">
             <div className="mb-4">
@@ -177,8 +196,8 @@ const PDFReader = () => {
             )}
 
             {parsedText && (
-                <div className="mt-4">
-                    <div className="bg-white shadow rounded-lg p-6">
+                <div className="mt-6">
+                    <div className="bg-white shadow-[0px_0px_10px_rgba(0,0,0,0.2)] rounded-lg p-6">
                         <div className="flex flex-col gap-4 mb-6">
                             <div className="flex items-center justify-between">
                                 <h3 className="text-lg font-semibold">Parsed Content</h3>
@@ -186,7 +205,7 @@ const PDFReader = () => {
                                     <button
                                         onClick={() => handlePageChange(currentPage - 1)}
                                         disabled={currentPage === 1}
-                                        className="px-3 py-1 text-sm bg-violet-50 text-violet-700 rounded-full disabled:opacity-50"
+                                        className="px-3 py-1 text-base bg-violet-50 text-[#7678ed] rounded-md disabled:opacity-50"
                                     >
                                         Previous
                                     </button>
@@ -196,7 +215,7 @@ const PDFReader = () => {
                                     <button
                                         onClick={() => handlePageChange(currentPage + 1)}
                                         disabled={currentPage === totalPages}
-                                        className="px-3 py-1 text-sm bg-violet-50 text-violet-700 rounded-full disabled:opacity-50"
+                                        className="px-3 py-1 text-base bg-violet-50 text-[#7678ed] rounded-md disabled:opacity-50"
                                     >
                                         Next
                                     </button>
@@ -206,14 +225,14 @@ const PDFReader = () => {
                                 <div className="flex items-center gap-2">
                                     <button
                                         onClick={() => adjustFontSize(-1)}
-                                        className="px-2 py-1 text-sm bg-violet-50 text-violet-700 rounded"
+                                        className="px-2 py-1 text-sm bg-violet-50 text-[#7678ed] rounded"
                                     >
                                         A-
                                     </button>
                                     <span className="text-sm">Font Size</span>
                                     <button
                                         onClick={() => adjustFontSize(1)}
-                                        className="px-2 py-1 text-sm bg-violet-50 text-violet-700 rounded"
+                                        className="px-2 py-1 text-sm bg-violet-50 text-[#7678ed] rounded"
                                     >
                                         A+
                                     </button>
@@ -221,14 +240,14 @@ const PDFReader = () => {
                                 <div className="flex items-center gap-2">
                                     <button
                                         onClick={() => adjustLineHeight(-0.1)}
-                                        className="px-2 py-1 text-sm bg-violet-50 text-violet-700 rounded"
+                                        className="px-2 py-1 text-sm bg-violet-50 text-[#7678ed] rounded"
                                     >
                                         L-
                                     </button>
                                     <span className="text-sm">Line Height</span>
                                     <button
                                         onClick={() => adjustLineHeight(0.1)}
-                                        className="px-2 py-1 text-sm bg-violet-50 text-violet-700 rounded"
+                                        className="px-2 py-1 text-sm bg-violet-50 text-[#7678ed] rounded"
                                     >
                                         L+
                                     </button>
@@ -255,13 +274,26 @@ const PDFReader = () => {
                                         padding: '0 1rem',
                                     }}
                                 >
-                                    {paragraph}
+                                    {paragraph.split(' ').map((word, wordIndex) => (
+                                        <span
+                                            key={wordIndex}
+                                            className={`inline-block cursor-pointer rounded px-1 transition-all duration-200 select-none
+                                                ${clickedWords.has(word) 
+                                                    ? 'bg-violet-100 text-[#2a2de0] scale-110 shadow-md' 
+                                                    : 'hover:bg-gray-100'
+                                                }`}
+                                            onDoubleClick={() => handleWordClick(word)}
+                                            title="Double click to hear pronunciation"
+                                        >
+                                            {word}{' '}
+                                        </span>
+                                    ))}
                                 </p>
                             ))}
                         </div>
                     </div>
                     
-                    <div className="mt-6 bg-white shadow rounded-lg p-6">
+                    <div className="mt-6 bg-white shadow-[0px_0px_10px_rgba(0,0,0,0.2)] rounded-lg p-6">
                         <h3 className="text-lg font-semibold mb-4">Word Analysis</h3>
                         <div className="flex flex-wrap gap-2">
                             {words.map((word, index) => (
@@ -271,8 +303,8 @@ const PDFReader = () => {
                                     disabled={speaking}
                                     className={`inline-block px-3 py-1 rounded-full text-sm transition-colors
                                         ${speaking 
-                                            ? 'bg-violet-100 text-violet-500 cursor-wait' 
-                                            : 'bg-violet-50 text-violet-700 hover:bg-violet-100'
+                                            ? 'bg-violet-100 text-[#2a2de0] cursor-wait' 
+                                            : 'bg-violet-50 text-[#7678ed] hover:bg-violet-100'
                                         }`}
                                 >
                                     {word}
