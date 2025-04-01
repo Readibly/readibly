@@ -9,19 +9,19 @@ export default function Home() {
   return (
     // hero section
     <div className="flex flex-col py-14">
-      <section className="w-full min-h-screen py-12 md:py-24 lg:py-18 bg-white">
+      <section className="w-full min-h-screen py-12 md:py-24 lg:py-18 bg-[#FDFCF4]">
         <div className="container px-4 md:px-6">
           <div className="grid gap-6 lg:grid-cols-2 lg:gap-12 items-center">
             <div className="space-y-4 pl-26">
-              <h1 className="text-3xl font-bold sm:text-4xl md:text-5xl lg:text-7xl text-gray-800">
-                <AnimatedText className="text-white"></AnimatedText> Easily
+              <h1 className="text-9xl font-medium sm:text-4xl md:text-5xl lg:text-7xl text-gray-800">
+                <AnimatedText className="font-bold text-white"></AnimatedText> Easily
               </h1>
               <p className="text-lg font-normal med:text-xl text-gray-800">
                 Readibly helps people with dyslexia to have the same and equal chance to gain information by reading using eye-tracking and text-to-speech technology. Try our service for free right now.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 py-4">
                 <Link href="/reader">
-                  <Button className="bg-purple-600 text-base font-medium hover:bg-purple-500 px-6 py-4 h-auto">
+                  <Button className="bg-[#7678ed] text-base font-medium hover:bg-[#9294f1] px-6 py-4 h-auto">
                     Get Started <ArrowRight className="ml-2 h-5 w-5">
                     </ArrowRight>
                   </Button>
@@ -42,11 +42,11 @@ export default function Home() {
       </section>
 
       {/* Feature Section */}
-      <section className="w-full h-min-screen flex flex-col items-center py-12 md:py-24 bg-purple-100">
+      <section className="w-full h-min-screen flex flex-col items-center py-12 md:py-24 bg-[#e9ecef]">
         <div className="container px-4 md:px-6">
           <div className="flex flex-col items-center justify-center space-y-4 text-center">
             <div className="space-y-4">
-              <h2 className="text-3xl font-bold sm:text-4xl md:text-5xl text-gray-800">
+              <h2 className="text-3xl font-medium sm:text-4xl md:text-5xl text-gray-800">
                 Main Features
               </h2>
               <p className="max-w-[700px] text-muted-foreground font-normal text-xl gap-8">
@@ -57,7 +57,7 @@ export default function Home() {
           <div className="mx-auto grid max-w-5xl items-center gap-6 py-12 lg:grid-cols-3">
             <FeatureCard
               is3D
-              icon={<Eye className="h-8 w-8 text-purple-600" />}
+              icon={<Eye className="h-8 w-8 text-[#7678ed]" />}
               title="Eye-Tracking"
               description={
                 <>
@@ -70,7 +70,7 @@ export default function Home() {
             />
             <FeatureCard
               is3D
-              icon={<Headphones className="h-8 w-8 text-purple-600" />}
+              icon={<Headphones className="h-8 w-8 text-[#7678ed]" />}
               title="Text-to-Speech"
               description={
                 <>
@@ -84,7 +84,7 @@ export default function Home() {
             />
             <FeatureCard
               is3D
-              icon={<BookOpen className="h-8 w-8 text-purple-600" />}
+              icon={<BookOpen className="h-8 w-8 text-[#7678ed]" />}
               title="Dyslexia Friendly"
               description={
                 <>

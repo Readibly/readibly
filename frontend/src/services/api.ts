@@ -1,8 +1,10 @@
-const API_BASE_URL = 'http://localhost:8000';
+const API_BASE_URL = 'https://localhost:8000';
 
-export interface PDFContent {
-  content: { [key: number]: string };
-  total_pages: number;
+export interface PDFResponse {
+  status: string;
+  text: string;
+  words: string[];
+  pageCount: number;
 }
 
 export interface GazeData {
@@ -10,14 +12,19 @@ export interface GazeData {
   gaze_direction: number[];
 }
 
+export interface TextData {
+  text: string[];
+  positions: { x: number; y: number }[];
+}
+
 export const api = {
   // PDF Upload and Parsing
-  uploadPDF: async (file: File): Promise<PDFContent> => {
+  uploadPDF: async (file: File): Promise<PDFResponse> => {
     try {
       const formData = new FormData();
       formData.append('file', file);
 
-      const response = await fetch(`${API_BASE_URL}/api/upload-pdf`, {
+      const response = await fetch(`${API_BASE_URL}/upload-pdf`, {
         method: 'POST',
         body: formData,
       });
@@ -28,11 +35,7 @@ export const api = {
       }
 
       const data = await response.json();
-      if (!data.content) {
-        throw new Error('Invalid response format from server');
-      }
-      
-      return data.content;
+      return data;
     } catch (error) {
       console.error('API Error:', error);
       throw error;
@@ -43,6 +46,7 @@ export const api = {
   async startEyeTracking(): Promise<void> {
     const response = await fetch(`${API_BASE_URL}/api/start-eye-tracking`, {
       method: 'POST',
+      credentials: 'include',
     });
     
     if (!response.ok) {
@@ -54,6 +58,7 @@ export const api = {
   async stopEyeTracking(): Promise<void> {
     const response = await fetch(`${API_BASE_URL}/api/stop-eye-tracking`, {
       method: 'POST',
+      credentials: 'include',
     });
     
     if (!response.ok) {
@@ -71,10 +76,12 @@ export const api = {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ text }),
+        credentials: 'include',
       });
 
       if (!response.ok) {
-        throw new Error(`Text-to-speech failed: ${response.statusText}`);
+        const errorData = await response.json();
+        throw new Error(errorData.detail || `Text-to-speech failed: ${response.statusText}`);
       }
 
       const data = await response.json();
@@ -86,7 +93,7 @@ export const api = {
   },
 
   // Set Text Data for Eye Tracking
-  setTextData: async (data: { text: string[]; positions: { x: number; y: number }[] }): Promise<void> => {
+  setTextData: async (data: TextData): Promise<void> => {
     try {
       const response = await fetch(`${API_BASE_URL}/api/set-text-data`, {
         method: 'POST',
@@ -94,10 +101,12 @@ export const api = {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(data),
+        credentials: 'include',
       });
 
       if (!response.ok) {
-        throw new Error(`Failed to set text data: ${response.statusText}`);
+        const errorData = await response.json();
+        throw new Error(errorData.detail || `Failed to set text data: ${response.statusText}`);
       }
     } catch (error) {
       console.error('Error setting text data:', error);
