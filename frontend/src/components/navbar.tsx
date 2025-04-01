@@ -52,6 +52,13 @@ export default function Navbar() {
                       >
                         Reader
                       </Link>
+                      <Link
+                        href="/learn"
+                        className="block px-6 py-2 text-sm font-medium text-black hover:text-gray-700"
+                        onClick={() => setIsServicesOpen(false)}
+                      >
+                        Learn
+                      </Link>
                     </div>
                   </div>
                 )}
