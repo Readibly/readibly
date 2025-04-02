@@ -175,7 +175,7 @@ const PDFReader = () => {
                         file:mr-4 file:py-2 file:px-4
                         file:rounded-md file:border-0
                         file:text-sm file:font-semibold
-                        file:bg-violet-50 file:text-[#7678ed]
+                        file:bg-violet-50 file:text-[#2e31ce]
                         hover:file:bg-violet-100"
                     disabled={isLoading}
                 />
@@ -205,7 +205,7 @@ const PDFReader = () => {
                                     <button
                                         onClick={() => handlePageChange(currentPage - 1)}
                                         disabled={currentPage === 1}
-                                        className="px-3 py-1 text-base bg-violet-50 text-[#7678ed] rounded-md disabled:opacity-50"
+                                        className="px-3 py-1 text-base bg-violet-50 text-[#2e31ce] rounded-md disabled:opacity-50"
                                     >
                                         Previous
                                     </button>
@@ -215,7 +215,7 @@ const PDFReader = () => {
                                     <button
                                         onClick={() => handlePageChange(currentPage + 1)}
                                         disabled={currentPage === totalPages}
-                                        className="px-3 py-1 text-base bg-violet-50 text-[#7678ed] rounded-md disabled:opacity-50"
+                                        className="px-3 py-1 text-base bg-violet-50 text-[#2e31ce] rounded-md disabled:opacity-50"
                                     >
                                         Next
                                     </button>
@@ -225,14 +225,14 @@ const PDFReader = () => {
                                 <div className="flex items-center gap-2">
                                     <button
                                         onClick={() => adjustFontSize(-1)}
-                                        className="px-2 py-1 text-sm bg-violet-50 text-[#7678ed] rounded"
+                                        className="px-2 py-1 text-sm bg-violet-50 text-[#2e31ce] rounded"
                                     >
                                         A-
                                     </button>
                                     <span className="text-sm">Font Size</span>
                                     <button
                                         onClick={() => adjustFontSize(1)}
-                                        className="px-2 py-1 text-sm bg-violet-50 text-[#7678ed] rounded"
+                                        className="px-2 py-1 text-sm bg-violet-50 text-[#2e31ce] rounded"
                                     >
                                         A+
                                     </button>
@@ -240,14 +240,14 @@ const PDFReader = () => {
                                 <div className="flex items-center gap-2">
                                     <button
                                         onClick={() => adjustLineHeight(-0.1)}
-                                        className="px-2 py-1 text-sm bg-violet-50 text-[#7678ed] rounded"
+                                        className="px-2 py-1 text-sm bg-violet-50 text-[#2e31ce] rounded"
                                     >
                                         L-
                                     </button>
                                     <span className="text-sm">Line Height</span>
                                     <button
                                         onClick={() => adjustLineHeight(0.1)}
-                                        className="px-2 py-1 text-sm bg-violet-50 text-[#7678ed] rounded"
+                                        className="px-2 py-1 text-sm bg-violet-50 text-[#2e31ce] rounded"
                                     >
                                         L+
                                     </button>

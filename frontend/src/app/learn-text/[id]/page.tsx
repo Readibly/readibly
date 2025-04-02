@@ -119,7 +119,7 @@ export default function LearnTextPage() {
           </div>
           <button
             onClick={() => router.push('/learn')}
-            className="text-violet-500 hover:text-violet-600 flex items-center gap-2"
+            className="text-[#2e31ce] hover:text-violet-600 flex items-center gap-2"
           >
             <ChevronLeft size={20} />
             Back to Templates
@@ -131,7 +131,7 @@ export default function LearnTextPage() {
             <span
               className={`text-4xl font-['OpenDyslexic'] cursor-pointer select-none transition-all duration-200
                 ${clickedWords.has(words[currentWordIndex]) 
-                  ? 'bg-violet-100 text-[#2a2de0] scale-110 shadow-md' 
+                  ? 'bg-violet-100 text-[#2e31ce] scale-110 shadow-md' 
                   : 'hover:bg-gray-100'
                 }`}
               onDoubleClick={() => handleWordClick(words[currentWordIndex])}
@@ -145,14 +145,14 @@ export default function LearnTextPage() {
             <button
               onClick={() => setCurrentWordIndex(prev => Math.max(0, prev - 1))}
               disabled={currentWordIndex === 0}
-              className="p-2 rounded-full bg-violet-50 text-violet-500 hover:bg-violet-100 disabled:opacity-50"
+              className="p-2 rounded-full bg-violet-50 text-[#2e31ce] hover:bg-violet-100 disabled:opacity-50"
             >
               <ChevronLeft size={24} />
             </button>
 
             <button
               onClick={() => setShowPageSelector(!showPageSelector)}
-              className="p-2 rounded-full bg-violet-50 text-violet-500 hover:bg-violet-100"
+              className="p-2 rounded-full bg-violet-50 text-[#2e31ce] hover:bg-violet-100"
             >
               <List size={24} />
             </button>
@@ -160,7 +160,7 @@ export default function LearnTextPage() {
             <button
               onClick={() => setCurrentWordIndex(prev => Math.min(words.length - 1, prev + 1))}
               disabled={currentWordIndex === words.length - 1}
-              className="p-2 rounded-full bg-violet-50 text-violet-500 hover:bg-violet-100 disabled:opacity-50"
+              className="p-2 rounded-full bg-violet-50 text-[#2e31ce] hover:bg-violet-100 disabled:opacity-50"
             >
               <ChevronRight size={24} />
             </button>
@@ -175,8 +175,8 @@ export default function LearnTextPage() {
                     onClick={() => navigateToWord(index)}
                     className={`p-2 rounded ${
                       index === currentWordIndex
-                        ? 'bg-violet-500 text-white'
-                        : 'bg-violet-50 text-violet-500 hover:bg-violet-100'
+                        ? 'bg-[#2e31ce] text-white'
+                        : 'bg-violet-50 text-[#2e31ce] hover:bg-violet-100'
                     }`}
                   >
                     {index + 1}

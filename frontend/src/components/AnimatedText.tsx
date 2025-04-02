@@ -47,7 +47,7 @@ export default function AnimatedText({ className = "" }: AnimatedTextProps) {
   return (
     <span className={`relative inline-block ${className}`}>
       <span className="relative z-10">{displayText}</span>
-      <span className="absolute inset-[-4px] bg-[#7678ed]/90 transform"></span>
+      <span className="absolute inset-[-4px] bg-[#eaeafa] transform"></span>
     </span>
   );
 } 
