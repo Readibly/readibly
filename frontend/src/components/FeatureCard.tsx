@@ -5,34 +5,19 @@ interface FeatureCardProps {
   icon: React.ReactNode;
   title: string;
   description: React.ReactNode;
-  is3D?: boolean;
+  isHover?: boolean;
 }
 
-export default function FeatureCard({ icon, title, description, is3D = false }: FeatureCardProps) {
-  if (is3D) {
+export default function FeatureCard({ icon, title, description, isHover = false }: FeatureCardProps) {
+  if (isHover) {
     return (
-      <div className="relative flex flex-col items-center justify-center rounded-[14px] z-[1111] overflow-hidden transform transition-transform duration-300 hover:scale-105 hover:shadow-2xl" style={{perspective: '1000px'}}>
-        <div 
-          className="flex flex-col items-center space-y-4 rounded-lg p-6 bg-white relative w-full transition-all duration-300 hover:shadow-[0_10px_20px_rgba(0,0,0,0.2)] border-2 border-purple-600 hover:border-purple-400" 
-          style={{transform: 'translateZ(20px)'}} 
-          onMouseMove={(e) => {
-            const rect = e.currentTarget.getBoundingClientRect();
-            const x = e.clientX - rect.left;
-            const y = e.clientY - rect.top;
-            const centerX = rect.width / 2;
-            const centerY = rect.height / 2;
-            const rotateX = (y - centerY) / 10;
-            const rotateY = (centerX - x) / 10;
-            e.currentTarget.style.transform = `translateZ(20px) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
-          }} 
-          onMouseLeave={(e) => {
-            e.currentTarget.style.transform = 'translateZ(20px)';
-          }}
-        >
+      <div className="relative flex flex-col items-center justify-center rounded-md overflow-hidden group">
+        <div className="absolute inset-0 bg-gradient-to-r from-[#3c3fdd] to-[#772abe] opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-[24px]"></div>
+        <div className="relative flex flex-col items-center space-y-4 rounded-lg p-6 bg-white w-full transition-all duration-300 group-hover:-translate-y-2 group-hover:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.3)]">
           <div className="rounded-full bg-primary/2 p-3">
             {icon}
           </div>
-          <h3 className="text-3xl font-medium text-[#7678ed]">
+          <h3 className="text-3xl font-medium text-[#2e31ce]">
             {title}
           </h3>
           <p className="text-center text-muted-foreground">
@@ -44,7 +29,7 @@ export default function FeatureCard({ icon, title, description, is3D = false }: 
   }
 
   return (
-    <div className="flex flex-col items-center space-y-4 rounded-lg border p-6 shadow-xl bg-white">
+    <div className="flex flex-col items-center space-y-4 rounded-lg border p-6 shadow-[0px_0px_10px_rgba(0,0,0,1)] bg-white">
       <div className="rounded-full bg-primary/2 p-3">
         {icon}
       </div>
