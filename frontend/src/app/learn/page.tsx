@@ -88,7 +88,7 @@ export default function LearnPage() {
             onClick={() => setSelectedCategory('all')}
             className={`px-4 py-2 rounded-lg ${
               selectedCategory === 'all'
-                ? 'bg-violet-500 text-white'
+                ? 'bg-[#2e31ce] text-white'
                 : 'bg-white text-gray-700 hover:bg-gray-50'
             }`}
           >
@@ -98,7 +98,7 @@ export default function LearnPage() {
             onClick={() => setSelectedCategory('fairytale')}
             className={`px-4 py-2 rounded-lg ${
               selectedCategory === 'fairytale'
-                ? 'bg-violet-500 text-white'
+                ? 'bg-[#2e31ce] text-white'
                 : 'bg-white text-gray-700 hover:bg-gray-50'
             }`}
           >
@@ -108,7 +108,7 @@ export default function LearnPage() {
             onClick={() => setSelectedCategory('facts')}
             className={`px-4 py-2 rounded-lg ${
               selectedCategory === 'facts'
-                ? 'bg-violet-500 text-white'
+                ? 'bg-[#2e31ce] text-white'
                 : 'bg-white text-gray-700 hover:bg-gray-50'
             }`}
           >
@@ -126,8 +126,8 @@ export default function LearnPage() {
               <h2 className="text-xl font-semibold mb-2">{template.title}</h2>
               <p className="text-sm text-gray-600 mb-4">{template.description}</p>
               <div className="flex items-center justify-between">
-                <span className="text-sm text-violet-500 capitalize">{template.category}</span>
-                <button className="text-violet-500 hover:text-violet-600">
+                <span className="text-sm text-[#2e31ce] capitalize">{template.category}</span>
+                <button className="text-[#2e31ce] hover:text-violet-600">
                   Start Reading →
                 </button>
               </div>
