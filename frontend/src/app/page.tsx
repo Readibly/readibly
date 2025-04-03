@@ -4,13 +4,15 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight, Eye, Headphones, BookOpen } from "lucide-react";
 import AnimatedText from "@/components/AnimatedText";
 import FeatureCard from "@/components/FeatureCard";
+import FAQ from "@/components/FAQ";
+import AnimatedSection from "@/components/AnimatedSection";
 
 
 export default function Home() {
   return (
     // hero section
     <div className="flex flex-col mb-4">
-      <section className="w-full min-h-screen py-4 bg-[#FDFCF4]">
+      <AnimatedSection className="w-full min-h-screen py-4 bg-white">
         <div className="container px-4 md:px-6">
           <div className="grid gap-6 lg:grid-cols-2 lg:gap-12 items-center">
             <div className="space-y-4 pl-26">
@@ -21,7 +23,7 @@ export default function Home() {
                 Readibly helps people with dyslexia to have the same and equal chance to gain information by reading using eye-tracking and text-to-speech technology. Try Readibly for free right now.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 py-2">
-                <Link href="/reader">
+                <Link href="/options">
                   <Button className="bg-gradient-to-br from-[#2e31ce] via-[#772abe] to-[#9f53e6] text-base font-medium shadow-[0px_0px_10px_rgba(0,0,0,0.2)] hover:bg-gradient-to-br hover:from-[#373ad3] hover:via-[#9967c7] hover:to-[#a05de2] hover:cursor-pointer px-6 py-4 h-auto">
                     Get Started <ArrowRight className="ml-2 h-5 w-5">
                     </ArrowRight>
@@ -46,10 +48,10 @@ export default function Home() {
             </div>
           </div>
         </div>
-      </section>
+      </AnimatedSection>
 
       {/* Feature Section */}
-      <section className="w-full h-min-screen flex flex-col items-center py-12 md:py-24 bg-gradient-to-br from-[#2e31ce] via-[#772abe] to-[#a8a9f3]">
+      <AnimatedSection className="w-full h-min-screen flex flex-col items-center py-12 md:py-24 bg-gradient-to-br from-[#2e31ce] via-[#772abe] to-[#a8a9f3]" delay={0.2}>
         <div className="container px-4 md:px-6">
           <div className="flex flex-col items-center justify-center space-y-4 text-center">
             <div className="space-y-4">
@@ -105,15 +107,15 @@ export default function Home() {
             />
           </div>
         </div>
-      </section>
+      </AnimatedSection>
       
-      <section className="w-full h-min-screen flex flex-col items-center py-12 md:py-24 bg-[#FDFCF4]">
-            <div className="container px-4 md:px-6">
-              <div className="flex flex-col items-center justify-center space-y-4 text-center">
-
-              </div>
-            </div>
-      </section>
+      <AnimatedSection className="w-full h-min-screen flex flex-col items-center py-12 md:py-24 bg-white" delay={0.4}>
+        <div className="container px-4 md:px-6">
+          <div className="flex flex-col items-center justify-center space-y-4 text-center">
+            <FAQ />
+          </div>
+        </div>
+      </AnimatedSection>
     </div>
   );
 }

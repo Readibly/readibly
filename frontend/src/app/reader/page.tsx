@@ -5,7 +5,7 @@ import PDFReader from '@/lib/PDFReader';
 
 export default function ReaderPage() {
   return (
-    <div className="min-h-screen bg-[#FDFCF4]">
+    <div className="min-h-screen bg-white">
       <div className="container mx-auto px-4 py-8">
         <div className="mb-5 px-16">
           <h1 className="text-3xl font-bold mb-3">PDF Reader</h1>

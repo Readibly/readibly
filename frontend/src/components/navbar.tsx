@@ -46,7 +46,7 @@ export default function Navbar() {
                   <div className="absolute left-0 mt-2 w-48 rounded-lg shadow-[0px_0px_10px_rgba(0,0,0,0.1)] bg-white">
                     <div className="py-1" role="menu">
                       <Link
-                        href="/reader"
+                        href="/tutorial"
                         className="block px-6 py-2 text-sm font-medium text-black hover:text-gray-700"
                         onClick={() => setIsServicesOpen(false)}
                       >
