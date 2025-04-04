@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { api } from '@/services/api';
+import EyeTrackerJS from '@/components/EyeTrackerJS';
 
 const PDFReader = () => {
     const [isLoading, setIsLoading] = useState(false);
@@ -17,6 +18,10 @@ const PDFReader = () => {
     const [speechSynthesis, setSpeechSynthesis] = useState<SpeechSynthesis | null>(null);
     const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
     const [clickedWords, setClickedWords] = useState<Set<string>>(new Set());
+    const [isEyeTrackingEnabled, setIsEyeTrackingEnabled] = useState(false);
+    const [hoveredWord, setHoveredWord] = useState<string | null>(null);
+    const wordElements = useRef<Map<string, HTMLElement>>(new Map());
+    const gazePoint = useRef<{ x: number, y: number } | null>(null);
 
     useEffect(() => {
         // Initialize speech synthesis
@@ -164,9 +169,55 @@ const PDFReader = () => {
         }, 1000);
     };
 
+    const handleGazePoint = (x: number, y: number) => {
+        gazePoint.current = { x, y };
+        
+        // Find the word element under the gaze point
+        const element = document.elementFromPoint(x, y);
+        if (element) {
+            const wordSpan = element.closest('span');
+            if (wordSpan && wordSpan.textContent) {
+                const word = wordSpan.textContent.trim();
+                setHoveredWord(word);
+                
+                // Add hover effect
+                wordSpan.classList.add('bg-violet-100', 'text-[#2a2de0]', 'scale-105', 'shadow-sm');
+                
+                // Remove hover effect from other words
+                document.querySelectorAll('span').forEach(span => {
+                    if (span !== wordSpan) {
+                        span.classList.remove('bg-violet-100', 'text-[#2a2de0]', 'scale-105', 'shadow-sm');
+                    }
+                });
+            } else {
+                setHoveredWord(null);
+                // Remove hover effect from all words
+                document.querySelectorAll('span').forEach(span => {
+                    span.classList.remove('bg-violet-100', 'text-[#2a2de0]', 'scale-105', 'shadow-sm');
+                });
+            }
+        }
+    };
+
+    const handleDoubleBlink = () => {
+        if (hoveredWord) {
+            handleWordClick(hoveredWord);
+        }
+    };
+
+    // Update word elements map when words change
+    useEffect(() => {
+        wordElements.current.clear();
+        document.querySelectorAll('span').forEach(span => {
+            if (span.textContent) {
+                wordElements.current.set(span.textContent.trim(), span);
+            }
+        });
+    }, [words]);
+
     return (
         <div className="w-full max-w-6xl mx-auto p-4">
-            <div className="mb-4">
+            <div className="mb-4 flex justify-between items-center">
                 <input
                     type="file"
                     accept=".pdf"
@@ -179,6 +230,16 @@ const PDFReader = () => {
                         hover:file:bg-violet-100"
                     disabled={isLoading}
                 />
+                <button
+                    onClick={() => setIsEyeTrackingEnabled(!isEyeTrackingEnabled)}
+                    className={`ml-4 px-4 py-2 rounded-lg ${
+                        isEyeTrackingEnabled
+                            ? 'bg-[#2e31ce] text-white'
+                            : 'bg-violet-50 text-[#2e31ce]'
+                    }`}
+                >
+                    {isEyeTrackingEnabled ? 'Disable Eye Tracking' : 'Enable Eye Tracking'}
+                </button>
             </div>
 
             {isLoading && (
@@ -314,6 +375,12 @@ const PDFReader = () => {
                     </div>
                 </div>
             )}
+
+            <EyeTrackerJS
+                isEnabled={isEyeTrackingEnabled}
+                onGazePoint={handleGazePoint}
+                onDoubleBlink={handleDoubleBlink}
+            />
         </div>
     );
 };
