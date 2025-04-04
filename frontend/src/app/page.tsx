@@ -55,8 +55,8 @@ export default function Home() {
         <div className="container px-4 md:px-6">
           <div className="flex flex-col items-center justify-center space-y-4 text-center">
             <div className="space-y-4">
-              <h2 className="text-3xl font-medium sm:text-4xl md:text-5xl text-white">
-                Main Features
+              <h2 className="text-3xl font-semibold sm:text-4xl md:text-5xl text-white">
+                Our Services
               </h2>
               <p className="max-w-[700px] text-muted-foreground font-light text-xl gap-8 text-white">
                 Technology that helps people with dyslexia read more easily and comfortably.
