@@ -14,6 +14,9 @@ import uuid
 import PyPDF2
 import io
 import ssl
+import base64
+import cv2
+import numpy as np
 
 logging.basicConfig(
     level=logging.DEBUG,
@@ -45,88 +48,54 @@ UPLOAD_DIR = "uploads"
 if not os.path.exists(UPLOAD_DIR):
     os.makedirs(UPLOAD_DIR)
 
+@app.on_event("startup")
+async def startup_event():
+    global eye_tracker
+    eye_tracker = EyeTracker()
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    global eye_tracker
+    if eye_tracker:
+        eye_tracker.release()
+
 @app.websocket("/ws/eye-tracking")
 async def websocket_endpoint(websocket: WebSocket):
+    await websocket.accept()
+    
     try:
-        await websocket.accept()
-        active_connections.append(websocket)
-        logger.info("New WebSocket connection established")
-        
         while True:
-            try:
-                data = await websocket.receive_text()
-                logger.info(f"Raw WebSocket message received: {data}")
-                
-                # Try to parse as JSON, if fails treat as string
-                try:
-                    message = json.loads(data)
-                except json.JSONDecodeError:
-                    message = data
-                
-                logger.info(f"Processed WebSocket message: {message}")
-                
-                if message == "start":
-                    try:
-                        eye_tracker.start_tracking()
-                        logger.info("Eye tracking started")
-                        await websocket.send_json({
-                            "status": "started",
-                            "message": "Eye tracking started successfully"
-                        })
-                    except Exception as e:
-                        logger.error(f"Error starting eye tracking: {str(e)}")
-                        await websocket.send_json({
-                            "status": "error",
-                            "message": f"Failed to start eye tracking: {str(e)}"
-                        })
-                elif message == "stop":
-                    try:
-                        eye_tracker.stop_tracking()
-                        logger.info("Eye tracking stopped")
-                        await websocket.send_json({
-                            "status": "stopped",
-                            "message": "Eye tracking stopped successfully"
-                        })
-                    except Exception as e:
-                        logger.error(f"Error stopping eye tracking: {str(e)}")
-                        await websocket.send_json({
-                            "status": "error",
-                            "message": f"Failed to stop eye tracking: {str(e)}"
-                        })
-                elif isinstance(message, dict) and message.get("type") == "gaze":
-                    try:
-                        x = message.get("x", 0)
-                        y = message.get("y", 0)
-                        current_word = eye_tracker.update_gaze_position(x, y)
-                        if current_word:
-                            await websocket.send_json({
-                                "word": current_word
-                            })
-                    except Exception as e:
-                        logger.error(f"Error processing gaze data: {str(e)}")
-                else:
-                    logger.warning(f"Unknown WebSocket message: {message}")
-                    await websocket.send_json({
-                        "status": "error",
-                        "message": "Unknown message received"
-                    })
-                    
-            except WebSocketDisconnect:
-                logger.info("WebSocket connection closed")
-                break
-            except Exception as e:
-                logger.error(f"Error processing WebSocket message: {str(e)}")
-                await websocket.send_json({
-                    "status": "error",
-                    "message": str(e)
-                })
-                
+            # Read frame from webcam
+            ret, frame = eye_tracker.cap.read()
+            if not ret:
+                continue
+            
+            # Get gaze point and blink status
+            x, y, is_double_blink = eye_tracker.get_gaze_point(frame)
+            
+            # Send data to client
+            await websocket.send_json({
+                "x": x,
+                "y": y,
+                "isDoubleBlink": is_double_blink
+            })
+            
+            # Small delay to prevent overwhelming the connection
+            await asyncio.sleep(0.033)  # ~30 FPS
+            
     except Exception as e:
-        logger.error(f"WebSocket connection error: {str(e)}")
+        print(f"WebSocket error: {e}")
     finally:
-        if websocket in active_connections:
-            active_connections.remove(websocket)
-            logger.info("WebSocket connection removed from active connections")
+        await websocket.close()
+
+@app.post("/calibrate")
+async def calibrate(points: list):
+    global eye_tracker
+    if not eye_tracker:
+        return {"success": False, "error": "Eye tracker not initialized"}
+    
+    success = eye_tracker.calibrate(points)
+    return {"success": success}
 
 @app.post("/upload-pdf")
 async def upload_pdf(file: UploadFile = File(...)):
