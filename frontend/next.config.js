@@ -19,13 +19,16 @@ checkCertificates();
 const nextConfig = {
   reactStrictMode: true,
   async headers() {
+    const isDev = process.env.NODE_ENV === 'development';
+    const backendUrl = process.env.BACKEND_URL || 'https://localhost:8000';
+    
     return [
       {
         source: '/:path*',
         headers: [
           {
             key: 'Access-Control-Allow-Origin',
-            value: 'https://localhost:8000',
+            value: backendUrl,
           },
           {
             key: 'Access-Control-Allow-Methods',
@@ -50,12 +53,15 @@ const nextConfig = {
     }
     return config;
   },
-  // Configure WebSocket to use secure connection
+  // Configure WebSocket based on environment
   async rewrites() {
+    const isDev = process.env.NODE_ENV === 'development';
+    const backendUrl = process.env.BACKEND_URL || 'https://localhost:8000';
+    
     return [
       {
         source: '/ws/:path*',
-        destination: 'https://localhost:8000/ws/:path*',
+        destination: `${backendUrl}/ws/:path*`,
       },
     ];
   },

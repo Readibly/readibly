@@ -23,9 +23,15 @@ logger = logging.getLogger(__name__)
 app = FastAPI()
 
 # Configure CORS
+origins = [
+    os.getenv("FRONTEND_URL", "https://localhost:3000"),
+    "http://localhost:3000",
+    "https://localhost:3000"
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://localhost:3000"],  # Frontend URL with HTTPS
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -42,6 +48,10 @@ if not os.path.exists(UPLOAD_DIR):
 
 # Include routers
 app.include_router(speech_to_text.router)
+
+# Get port from environment variable for production
+port = int(os.getenv("PORT", 8000))
+host = os.getenv("HOST", "0.0.0.0")
 
 @app.post("/upload-pdf")
 async def upload_pdf(file: UploadFile = File(...)):
@@ -121,48 +131,10 @@ async def text_to_speech(text: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 if __name__ == "__main__":
-    # Configure SSL context
-    ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
-    try:
-        # Generate self-signed certificate if not exists
-        from OpenSSL import crypto
-        from datetime import datetime, timedelta
-
-        # Generate key
-        key = crypto.PKey()
-        key.generate_key(crypto.TYPE_RSA, 2048)
-
-        # Generate certificate
-        cert = crypto.X509()
-        cert.get_subject().CN = "localhost"
-        cert.set_serial_number(1000)
-        cert.gmtime_adj_notBefore(0)
-        cert.gmtime_adj_notAfter(365*24*60*60)  # Valid for one year
-        cert.set_issuer(cert.get_subject())
-        cert.set_pubkey(key)
-        cert.sign(key, 'sha256')
-
-        # Write certificate and private key to files
-        with open("server.crt", "wb") as f:
-            f.write(crypto.dump_certificate(crypto.FILETYPE_PEM, cert))
-        with open("server.key", "wb") as f:
-            f.write(crypto.dump_privatekey(crypto.FILETYPE_PEM, key))
-
-        # Load certificate and key
-        ssl_context.load_cert_chain("server.crt", "server.key")
-        
-        logger.info("SSL certificate generated and loaded successfully")
-    except Exception as e:
-        logger.error(f"Failed to setup SSL: {str(e)}")
-        raise
-
-    # Run server with SSL
-    uvicorn.run(
-        "main:app", 
-        host="0.0.0.0", 
-        port=8000, 
-        ssl_keyfile="server.key",
-        ssl_certfile="server.crt",
-        reload=True,
-        log_level="debug"
-    ) 
+    import uvicorn
+    uvicorn.run("main:app", 
+                host=host,
+                port=port,
+                ssl_keyfile=None if os.getenv("ENVIRONMENT") == "production" else "localhost-key.pem",
+                ssl_certfile=None if os.getenv("ENVIRONMENT") == "production" else "localhost.pem",
+                reload=os.getenv("ENVIRONMENT") != "production") 
