@@ -1,91 +1,50 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useRef } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { api } from '@/services/api';
 import EyeTrackerJS from '@/components/EyeTrackerJS';
+import { Button } from '@/components/ui/button';
+import { Upload, Eye, Settings, Plus, Minus, ChevronLeft, ChevronRight, X } from 'lucide-react';
 
 const PDFReader = () => {
-    const [isLoading, setIsLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
-    const [parsedText, setParsedText] = useState<string>('');
-    const [words, setWords] = useState<string[]>([]);
+    const [parsedText, setParsedText] = useState<string | null>(null);
     const [currentPage, setCurrentPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
-    const [paragraphs, setParagraphs] = useState<string[]>([]);
     const [fontSize, setFontSize] = useState(18);
-    const [lineHeight, setLineHeight] = useState(1.8);
-    const [speaking, setSpeaking] = useState(false);
-    const [speechSynthesis, setSpeechSynthesis] = useState<SpeechSynthesis | null>(null);
-    const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
-    const [clickedWords, setClickedWords] = useState<Set<string>>(new Set());
+    const [letterSpacing, setLetterSpacing] = useState(0.1);
     const [isEyeTrackingEnabled, setIsEyeTrackingEnabled] = useState(false);
-    const [hoveredWord, setHoveredWord] = useState<string | null>(null);
-    const wordElements = useRef<Map<string, HTMLElement>>(new Map());
-    const gazePoint = useRef<{ x: number, y: number } | null>(null);
+    const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+    const [clickedWords, setClickedWords] = useState<Set<string>>(new Set());
+    const [pages, setPages] = useState<string[][]>([]);
+    const [speaking, setSpeaking] = useState(false);
+    const [showSettings, setShowSettings] = useState(false);
+    const [fontSizeInput, setFontSizeInput] = useState('18');
+    const [letterSpacingInput, setLetterSpacingInput] = useState('0.1');
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
-    useEffect(() => {
-        // Initialize speech synthesis
-        if (typeof window !== 'undefined') {
-            const synthesis = window.speechSynthesis;
-            setSpeechSynthesis(synthesis);
-
-            // Load voices
-            const loadVoices = () => {
-                const availableVoices = synthesis.getVoices();
-                setVoices(availableVoices);
-            };
-
-            // Load voices immediately if available
-            loadVoices();
-
-            // Load voices when they become available
-            synthesis.onvoiceschanged = loadVoices;
-
-            // Clean up on unmount
-            return () => {
-                synthesis.cancel();
-                synthesis.onvoiceschanged = null;
-            };
-        }
-    }, []);
-
-    const speakWord = (word: string) => {
-        if (!speechSynthesis) return;
-
-        try {
-            // Cancel any ongoing speech
-            speechSynthesis.cancel();
-
-            // Create utterance
-            const utterance = new SpeechSynthesisUtterance(word);
-            
-            // Configure voice settings
-            utterance.rate = 0.8; // Slightly slower rate for clarity
-            utterance.pitch = 1.0;
-            utterance.volume = 1.0;
-
-            // Select English voice
-            const englishVoice = voices.find(voice => 
-                voice.lang.includes('en') && voice.name.includes('Google')
-            ) || voices.find(voice => voice.lang.includes('en')) || voices[0];
-            
-            if (englishVoice) {
-                utterance.voice = englishVoice;
+    const containerVariants = {
+        hidden: { opacity: 0, y: 20 },
+        visible: { 
+            opacity: 1, 
+            y: 0,
+            transition: {
+                duration: 0.5,
+                ease: "easeOut"
             }
+        }
+    };
 
-            // Handle speech events
-            utterance.onstart = () => setSpeaking(true);
-            utterance.onend = () => setSpeaking(false);
-            utterance.onerror = (event) => {
-                console.error('Speech synthesis error:', event);
-                setSpeaking(false);
-            };
-
-            // Start speaking
-            speechSynthesis.speak(utterance);
-        } catch (err) {
-            console.error('Error in speech synthesis:', err);
-            setSpeaking(false);
+    const contentVariants = {
+        hidden: { opacity: 0, x: -20 },
+        visible: { 
+            opacity: 1, 
+            x: 0,
+            transition: {
+                duration: 0.3,
+                ease: "easeOut"
+            }
         }
     };
 
@@ -93,45 +52,63 @@ const PDFReader = () => {
         const file = event.target.files?.[0];
         if (!file) return;
 
+        setIsLoading(true);
+        setError(null);
+
         try {
-            setIsLoading(true);
-            setError(null);
-
-            if (file.type !== 'application/pdf') {
-                throw new Error('Please upload a PDF file');
-            }
-
             const result = await api.uploadPDF(file);
             setParsedText(result.text);
-            setWords(result.words);
             setTotalPages(result.pageCount);
             
-            // Process text for dyslexia-friendly reading
-            const processedText = result.text
-                .replace(/\n+/g, ' ') // Replace multiple newlines with single space
-                .replace(/\s+/g, ' ') // Replace multiple spaces with single space
-                .split(/(?<=[.!?])\s+/) // Split on sentence endings
+            // Process text for pages and paragraphs
+            const pageTexts = result.text.split(/\f|\n\f|\n\n/).filter(text => text.trim().length > 0);
+            const processedPages = pageTexts.map(pageText => {
+                // Process each page's text into paragraphs
+                return pageText
+                .replace(/\n+/g, ' ')
+                .replace(/\s+/g, ' ')
+                .split(/(?<=[.!?])\s+/)
                 .map(sentence => sentence.trim())
                 .filter(sentence => sentence.length > 0);
-
-            // Create shorter, more digestible paragraphs
-            const groupedParagraphs: string[] = [];
-            let currentParagraph: string[] = [];
-            
-            processedText.forEach((sentence, index) => {
-                currentParagraph.push(sentence);
-                // Create shorter paragraphs (2-3 sentences) for better readability
-                if (currentParagraph.length >= 2 || index === processedText.length - 1) {
-                    groupedParagraphs.push(currentParagraph.join(' '));
-                    currentParagraph = [];
-                }
             });
-
-            setParagraphs(groupedParagraphs);
-
-        } catch (err) {
-            console.error('Upload error:', err);
-            setError(err instanceof Error ? err.message : 'Failed to upload PDF');
+            
+            // Ensure we have the correct number of pages
+            if (processedPages.length !== result.pageCount) {
+                // If we don't have enough pages, split the text evenly
+                if (processedPages.length < result.pageCount) {
+                    const wordsPerPage = Math.ceil(processedPages.flat().length / result.pageCount);
+                    const allWords = processedPages.flat();
+                    const newPages: string[][] = [];
+                    
+                    for (let i = 0; i < result.pageCount; i++) {
+                        const start = i * wordsPerPage;
+                        const end = Math.min(start + wordsPerPage, allWords.length);
+                        newPages.push(allWords.slice(start, end));
+                    }
+                    
+                    setPages(newPages);
+                } else {
+                    // If we have too many pages, combine them
+                    const wordsPerPage = Math.ceil(processedPages.flat().length / result.pageCount);
+                    const allWords = processedPages.flat();
+                    const newPages: string[][] = [];
+                    
+                    for (let i = 0; i < result.pageCount; i++) {
+                        const start = i * wordsPerPage;
+                        const end = Math.min(start + wordsPerPage, allWords.length);
+                        newPages.push(allWords.slice(start, end));
+                    }
+                    
+                    setPages(newPages);
+                }
+            } else {
+                setPages(processedPages);
+            }
+            
+            setCurrentPage(1);
+        } catch (error) {
+            console.error('Upload error:', error);
+            setError(error instanceof Error ? error.message : 'Failed to parse PDF. Please try again.');
         } finally {
             setIsLoading(false);
         }
@@ -143,245 +120,369 @@ const PDFReader = () => {
         }
     };
 
-    const adjustFontSize = (delta: number) => {
-        setFontSize(prev => Math.max(16, Math.min(24, prev + delta)));
+    const handleFontSizeInput = (value: string) => {
+        setFontSizeInput(value);
+        const numValue = parseInt(value);
+        if (!isNaN(numValue) && numValue >= 14 && numValue <= 40) {
+            setFontSize(numValue);
+        }
     };
 
-    const adjustLineHeight = (delta: number) => {
-        setLineHeight(prev => Math.max(1.5, Math.min(2.2, prev + delta)));
+    const handleLetterSpacingInput = (value: string) => {
+        setLetterSpacingInput(value);
+        const numValue = parseFloat(value);
+        if (!isNaN(numValue) && numValue >= 0 && numValue <= 0.5) {
+            setLetterSpacing(numValue);
+        }
+    };
+
+    const adjustFontSize = (delta: number) => {
+        const newSize = Math.max(14, Math.min(40, fontSize + delta));
+        setFontSize(newSize);
+        setFontSizeInput(newSize.toString());
+    };
+
+    const adjustLetterSpacing = (delta: number) => {
+        const newSpacing = Math.max(0, Math.min(0.5, letterSpacing + delta * 0.1));
+        setLetterSpacing(newSpacing);
+        setLetterSpacingInput(newSpacing.toFixed(2));
     };
 
     const handleWordClick = (word: string) => {
+        if (speaking) return;
         speakWord(word);
-        setClickedWords(prev => {
-            const newSet = new Set(prev);
-            newSet.add(word);
-            return newSet;
-        });
+    };
+
+    const speakWord = (word: string) => {
+        if (speaking) return;
+
+        setSpeaking(true);
+        const utterance = new SpeechSynthesisUtterance(word);
+        utterance.lang = 'en-US';
+        utterance.rate = 0.8;
+        utterance.pitch = 1.0;
+        utterance.volume = 1.0;
+
+        const voices = window.speechSynthesis.getVoices();
+        const englishVoice = voices.find(voice => 
+            voice.lang.includes('en') && voice.name.includes('Google')
+        ) || voices.find(voice => voice.lang.includes('en')) || voices[0];
         
-        // Remove the highlight after 1 second
-        setTimeout(() => {
+        if (englishVoice) {
+            utterance.voice = englishVoice;
+        }
+
+        utterance.onend = () => {
+            setSpeaking(false);
             setClickedWords(prev => {
                 const newSet = new Set(prev);
                 newSet.delete(word);
                 return newSet;
             });
-        }, 1000);
+        };
+
+        setClickedWords(prev => {
+            const newSet = new Set(prev);
+            newSet.add(word);
+            return newSet;
+        });
+        window.speechSynthesis.speak(utterance);
     };
 
-    const handleGazePoint = (x: number, y: number) => {
-        gazePoint.current = { x, y };
-        
-        // Find the word element under the gaze point
-        const element = document.elementFromPoint(x, y);
-        if (element) {
-            const wordSpan = element.closest('span');
-            if (wordSpan && wordSpan.textContent) {
-                const word = wordSpan.textContent.trim();
-                setHoveredWord(word);
-                
-                // Add hover effect
-                wordSpan.classList.add('bg-violet-100', 'text-[#2a2de0]', 'scale-105', 'shadow-sm');
-                
-                // Remove hover effect from other words
-                document.querySelectorAll('span').forEach(span => {
-                    if (span !== wordSpan) {
-                        span.classList.remove('bg-violet-100', 'text-[#2a2de0]', 'scale-105', 'shadow-sm');
-                    }
-                });
+    const handleWordHover = (word: string | null) => {
+        setClickedWords(prev => {
+            const newSet = new Set(prev);
+            if (word) {
+                newSet.add(word);
             } else {
-                setHoveredWord(null);
-                // Remove hover effect from all words
-                document.querySelectorAll('span').forEach(span => {
-                    span.classList.remove('bg-violet-100', 'text-[#2a2de0]', 'scale-105', 'shadow-sm');
-                });
+                newSet.clear();
             }
-        }
+            return newSet;
+        });
     };
 
     const handleDoubleBlink = () => {
-        if (hoveredWord) {
-            handleWordClick(hoveredWord);
+        if (speaking) return;
+        const currentWord = clickedWords.size > 0 ? Array.from(clickedWords)[0] : null;
+        if (currentWord) {
+            speakWord(currentWord);
         }
     };
 
-    // Update word elements map when words change
-    useEffect(() => {
-        wordElements.current.clear();
-        document.querySelectorAll('span').forEach(span => {
-            if (span.textContent) {
-                wordElements.current.set(span.textContent.trim(), span);
-            }
-        });
-    }, [words]);
-
     return (
-        <div className="w-full max-w-6xl mx-auto p-4">
-            <div className="mb-4 flex justify-between items-center">
+        <motion.div
+            className="w-full"
+            initial="hidden"
+            animate="visible"
+            variants={containerVariants}
+        >
+            <div className="border-b border-gray-100 p-4">
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4">
                 <input
+                    ref={fileInputRef}
                     type="file"
                     accept=".pdf"
                     onChange={handleFileUpload}
-                    className="block w-full text-sm text-gray-500 font-extralight
-                        file:mr-4 file:py-2 file:px-4
-                        file:rounded-md file:border-0
-                        file:text-sm file:font-semibold
-                        file:bg-violet-50 file:text-[#2e31ce]
-                        hover:file:bg-violet-100"
-                    disabled={isLoading}
-                />
-                <button
+                            className="hidden"
+                            id="pdf-upload"
+                        />
+                        <label
+                            htmlFor="pdf-upload"
+                            className="flex items-center gap-2 px-4 py-2 bg-purple-50 text-[#2e31ce] rounded-lg cursor-pointer hover:bg-purple-100 transition-colors"
+                        >
+                            <Upload className="h-4 w-4" />
+                            <span className="text-sm font-medium">Upload PDF</span>
+                        </label>
+                        <Button
+                            variant="outline"
                     onClick={() => setIsEyeTrackingEnabled(!isEyeTrackingEnabled)}
-                    className={`ml-4 px-4 py-2 rounded-lg ${
-                        isEyeTrackingEnabled
-                            ? 'bg-[#2e31ce] text-white'
-                            : 'bg-violet-50 text-[#2e31ce]'
-                    }`}
-                >
-                    {isEyeTrackingEnabled ? 'Disable Eye Tracking' : 'Enable Eye Tracking'}
-                </button>
+                            className={`border-gray-200 ${isEyeTrackingEnabled ? 'bg-purple-50 text-[#2e31ce] border-[#2e31ce]' : ''}`}
+                        >
+                            <Eye className="h-4 w-4 mr-2" />
+                            {isEyeTrackingEnabled ? 'Eye Tracking On' : 'Enable Eye Tracking'}
+                        </Button>
+                    </div>
+                    <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-2">
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handlePageChange(currentPage - 1)}
+                                disabled={currentPage === 1}
+                                className="border-gray-200"
+                            >
+                                <ChevronLeft className="h-4 w-4" />
+                            </Button>
+                            <span className="text-sm text-gray-600">
+                                Page {currentPage} of {totalPages}
+                            </span>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handlePageChange(currentPage + 1)}
+                                disabled={currentPage === totalPages}
+                                className="border-gray-200"
+                            >
+                                <ChevronRight className="h-4 w-4" />
+                            </Button>
+                        </div>
+                        <Button
+                            variant="outline"
+                            onClick={() => setShowSettings(!showSettings)}
+                            className="border-gray-200"
+                        >
+                            <Settings className="h-4 w-4 mr-2" />
+                            Settings
+                        </Button>
+                    </div>
+                </div>
             </div>
 
-            {isLoading && (
-                <div className="text-center py-4">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
-                    <p className="mt-2">Processing PDF...</p>
-                </div>
-            )}
-
-            {error && (
-                <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
-                    <strong className="font-bold">Error: </strong>
-                    <span className="block sm:inline">{error}</span>
-                </div>
-            )}
-
-            {parsedText && (
-                <div className="mt-6">
-                    <div className="bg-white shadow-[0px_0px_10px_rgba(0,0,0,0.2)] rounded-lg p-6">
-                        <div className="flex flex-col gap-4 mb-6">
-                            <div className="flex items-center justify-between">
-                                <h3 className="text-lg font-semibold">Parsed Content</h3>
-                                <div className="flex items-center gap-4">
-                                    <button
-                                        onClick={() => handlePageChange(currentPage - 1)}
-                                        disabled={currentPage === 1}
-                                        className="px-3 py-1 text-base bg-violet-50 text-[#2e31ce] rounded-md disabled:opacity-50"
+            {/* Settings Modal */}
+            <AnimatePresence>
+                {showSettings && (
+                    <motion.div
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        className="absolute top-20 right-4 bg-white rounded-lg shadow-lg p-4 w-72 border border-gray-200 z-50"
+                    >
+                        <div className="flex justify-between items-center mb-4">
+                            <h2 className="text-lg font-semibold text-gray-900">Reading Settings</h2>
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => setShowSettings(false)}
+                                className="hover:bg-gray-100"
+                            >
+                                <X className="h-4 w-4" />
+                            </Button>
+                        </div>
+                        <div className="space-y-6">
+                            <div>
+                                <div className="flex justify-between items-center mb-2">
+                                    <h3 className="text-sm font-medium text-gray-700">Font Size</h3>
+                                    <span className="text-xs text-gray-500">14px - 40px</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => adjustFontSize(-2)}
+                                        className="border-gray-200"
                                     >
-                                        Previous
-                                    </button>
-                                    <span className="text-sm text-gray-600">
-                                        Page {currentPage} of {totalPages}
-                                    </span>
-                                    <button
-                                        onClick={() => handlePageChange(currentPage + 1)}
-                                        disabled={currentPage === totalPages}
-                                        className="px-3 py-1 text-base bg-violet-50 text-[#2e31ce] rounded-md disabled:opacity-50"
+                                        <Minus className="h-4 w-4" />
+                                    </Button>
+                                    <input
+                                        type="number"
+                                        value={fontSizeInput}
+                                        onChange={(e) => handleFontSizeInput(e.target.value)}
+                                        className="w-16 text-center border border-gray-200 rounded-md px-2 py-1 text-sm"
+                                        min="14"
+                                        max="40"
+                                    />
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => adjustFontSize(2)}
+                                        className="border-gray-200"
                                     >
-                                        Next
-                                    </button>
+                                        <Plus className="h-4 w-4" />
+                                    </Button>
                                 </div>
                             </div>
-                            <div className="flex items-center gap-4">
-                                <div className="flex items-center gap-2">
-                                    <button
-                                        onClick={() => adjustFontSize(-1)}
-                                        className="px-2 py-1 text-sm bg-violet-50 text-[#2e31ce] rounded"
-                                    >
-                                        A-
-                                    </button>
-                                    <span className="text-sm">Font Size</span>
-                                    <button
-                                        onClick={() => adjustFontSize(1)}
-                                        className="px-2 py-1 text-sm bg-violet-50 text-[#2e31ce] rounded"
-                                    >
-                                        A+
-                                    </button>
+                            <div>
+                                <div className="flex justify-between items-center mb-2">
+                                    <h3 className="text-sm font-medium text-gray-700">Letter Spacing</h3>
+                                    <span className="text-xs text-gray-500">0em - 0.5em</span>
                                 </div>
                                 <div className="flex items-center gap-2">
-                                    <button
-                                        onClick={() => adjustLineHeight(-0.1)}
-                                        className="px-2 py-1 text-sm bg-violet-50 text-[#2e31ce] rounded"
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => adjustLetterSpacing(-0.1)}
+                                        className="border-gray-200"
                                     >
-                                        L-
-                                    </button>
-                                    <span className="text-sm">Line Height</span>
-                                    <button
-                                        onClick={() => adjustLineHeight(0.1)}
-                                        className="px-2 py-1 text-sm bg-violet-50 text-[#2e31ce] rounded"
+                                        <Minus className="h-4 w-4" />
+                                    </Button>
+                                    <input
+                                        type="number"
+                                        value={letterSpacingInput}
+                                        onChange={(e) => handleLetterSpacingInput(e.target.value)}
+                                        step="0.01"
+                                        className="w-16 text-center border border-gray-200 rounded-md px-2 py-1 text-sm"
+                                        min="0"
+                                        max="0.5"
+                                    />
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => adjustLetterSpacing(0.1)}
+                                        className="border-gray-200"
                                     >
-                                        L+
-                                    </button>
+                                        <Plus className="h-4 w-4" />
+                                    </Button>
                                 </div>
                             </div>
                         </div>
-                        
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            <AnimatePresence mode="wait">
+                {isLoading && (
+                    <motion.div
+                        key="loading"
+                        className="flex flex-col items-center justify-center py-12"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                    >
+                        <div className="animate-spin rounded-full h-10 w-10 border-4 border-[#2e31ce] border-t-transparent"></div>
+                        <p className="mt-4 text-gray-600">Processing your PDF...</p>
+                    </motion.div>
+                )}
+
+                {error && (
+                    <motion.div
+                        key="error"
+                        className="bg-red-50 border border-red-200 text-red-600 p-4 rounded-lg m-4"
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                    >
+                        <p className="font-medium">Error: {error}</p>
+                    </motion.div>
+                )}
+
+                {!parsedText && !isLoading && !error && (
+                    <motion.div
+                        key="empty"
+                        className="flex flex-col items-center justify-center py-16 px-8 text-center"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                    >
+                        <div className="bg-purple-50 p-4 rounded-full mb-4">
+                            <Upload className="h-8 w-8 text-[#2e31ce]" />
+                        </div>
+                        <h3 className="text-lg font-semibold text-gray-900 mb-2">No PDF loaded yet</h3>
+                        <p className="text-gray-600 max-w-md">
+                            Upload a PDF file to start reading. We support all standard PDF documents.
+                        </p>
+                    </motion.div>
+                )}
+
+                {parsedText && (
+                    <motion.div
+                        key="content"
+                        variants={contentVariants}
+                        initial="hidden"
+                        animate="visible"
+                        exit="hidden"
+                        className="p-6"
+                    >
                         <div 
-                            className="prose max-w-none"
-                            style={{
-                                fontSize: `${fontSize}px`,
-                                lineHeight: lineHeight,
-                            }}
-                        >
-                            {paragraphs.map((paragraph, index) => (
-                                <p 
-                                    key={index}
-                                    className="mb-8 text-gray-800 font-['OpenDyslexic']"
-                                    style={{
-                                        textAlign: 'justify',
-                                        width: '100%',
-                                        maxWidth: '100%',
-                                        margin: '0 auto 2rem',
-                                        padding: '0 1rem',
-                                    }}
-                                >
-                                    {paragraph.split(' ').map((word, wordIndex) => (
-                                        <span
-                                            key={wordIndex}
-                                            className={`inline-block cursor-pointer rounded px-1 transition-all duration-200 select-none
-                                                ${clickedWords.has(word) 
-                                                    ? 'bg-violet-100 text-[#2a2de0] scale-110 shadow-md' 
-                                                    : 'hover:bg-gray-100'
-                                                }`}
-                                            onDoubleClick={() => handleWordClick(word)}
-                                            title="Double click to hear pronunciation"
-                                        >
-                                            {word}{' '}
-                                        </span>
-                                    ))}
-                                </p>
-                            ))}
+                            className="bg-white rounded-lg p-6 font-['OpenDyslexic']"
+                                style={{
+                                    fontSize: `${fontSize}px`,
+                                letterSpacing: `${letterSpacing}em`,
+                                }}
+                            >
+                            {pages[currentPage - 1]?.map((paragraph, index) => (
+                                    <p 
+                                        key={index}
+                                    className="mb-8 text-gray-800"
+                                        style={{
+                                            textAlign: 'justify',
+                                            width: '100%',
+                                            maxWidth: '100%',
+                                            margin: '0 auto 2rem',
+                                            padding: '0 1rem',
+                                        fontSize: 'inherit',
+                                        }}
+                                    >
+                                        {paragraph.split(' ').map((word, wordIndex) => (
+                                            <span
+                                                key={wordIndex}
+                                                className={`inline-block cursor-pointer rounded px-1 transition-all duration-200 select-none
+                                                    ${clickedWords.has(word) 
+                                                    ? 'bg-purple-100 text-[#2e31ce] scale-110 shadow-sm' 
+                                                    : 'hover:bg-gray-50'
+                                                    }`}
+                                            style={{
+                                                fontSize: 'inherit',
+                                            }}
+                                                onDoubleClick={() => handleWordClick(word)}
+                                                title="Double click to hear pronunciation"
+                                            >
+                                                {word}{' '}
+                                            </span>
+                                        ))}
+                                    </p>
+                                ))}
                         </div>
-                    </div>
-                    
-                    <div className="mt-6 bg-white shadow-[0px_0px_10px_rgba(0,0,0,0.2)] rounded-lg p-6">
-                        <h3 className="text-lg font-semibold mb-4">Word Analysis</h3>
-                        <div className="flex flex-wrap gap-2">
-                            {words.map((word, index) => (
-                                <button 
-                                    key={index}
-                                    onClick={() => speakWord(word)}
-                                    disabled={speaking}
-                                    className={`inline-block px-3 py-1 rounded-full text-sm transition-colors
-                                        ${speaking 
-                                            ? 'bg-violet-100 text-[#2a2de0] cursor-wait' 
-                                            : 'bg-violet-50 text-[#7678ed] hover:bg-violet-100'
-                                        }`}
-                                >
-                                    {word}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-                </div>
-            )}
+                    </motion.div>
+                )}
+            </AnimatePresence>
 
             <EyeTrackerJS
                 isEnabled={isEyeTrackingEnabled}
-                onGazePoint={handleGazePoint}
+                onGazePoint={(x, y) => {
+                    const element = document.elementFromPoint(x, y);
+                    if (element) {
+                        const wordSpan = element.closest('span');
+                        if (wordSpan && wordSpan.textContent) {
+                            handleWordHover(wordSpan.textContent.trim());
+                        } else {
+                            handleWordHover(null);
+                        }
+                    }
+                }}
                 onDoubleBlink={handleDoubleBlink}
             />
-        </div>
+        </motion.div>
     );
 };
 
