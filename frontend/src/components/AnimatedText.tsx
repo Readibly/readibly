@@ -8,7 +8,7 @@ interface AnimatedTextProps {
 
 export default function AnimatedText({ className = "" }: AnimatedTextProps) {
   const [displayText, setDisplayText] = useState("");
-  const words = ["Read", "Understand", "Learn"];
+  const words = ["Read Smarter", "Learn Faster", "Life Easier"];
   const [currentIndex, setCurrentIndex] = useState(0);
 
   useEffect(() => {
@@ -34,8 +34,8 @@ export default function AnimatedText({ className = "" }: AnimatedTextProps) {
               // Move to next word
               setCurrentIndex((prev) => (prev + 1) % words.length);
             }
-          }, 50);
-        }, 3000);
+          }, 30);
+        }, 2000);
       }
     }, 50);
 

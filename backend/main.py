@@ -1,19 +1,18 @@
-from fastapi import FastAPI, UploadFile, File, HTTPException, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, FileResponse
 import uvicorn
 from services.pdf_parser import PDFParser
-from services.eye_tracker import EyeTracker
 from services.text_to_speech import TextToSpeech
 import os
 import json
 import logging
-import asyncio
 import shutil
 import uuid
 import PyPDF2
 import io
 import ssl
+from routes import speech_to_text
 
 logging.basicConfig(
     level=logging.DEBUG,
@@ -23,10 +22,10 @@ logger = logging.getLogger(__name__)
 
 app = FastAPI()
 
-# Update CORS configuration untuk HTTPS
+# Configure CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://localhost:3000"],  # Sesuaikan dengan URL frontend
+    allow_origins=["https://localhost:3000"],  # Frontend URL with HTTPS
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -34,99 +33,15 @@ app.add_middleware(
 
 # Initialize services
 pdf_parser = PDFParser()
-eye_tracker = EyeTracker()
 tts = TextToSpeech()
-
-# Store active WebSocket connections
-active_connections = []
 
 # Create uploads directory if it doesn't exist
 UPLOAD_DIR = "uploads"
 if not os.path.exists(UPLOAD_DIR):
     os.makedirs(UPLOAD_DIR)
 
-@app.websocket("/ws/eye-tracking")
-async def websocket_endpoint(websocket: WebSocket):
-    try:
-        await websocket.accept()
-        active_connections.append(websocket)
-        logger.info("New WebSocket connection established")
-        
-        while True:
-            try:
-                data = await websocket.receive_text()
-                logger.info(f"Raw WebSocket message received: {data}")
-                
-                # Try to parse as JSON, if fails treat as string
-                try:
-                    message = json.loads(data)
-                except json.JSONDecodeError:
-                    message = data
-                
-                logger.info(f"Processed WebSocket message: {message}")
-                
-                if message == "start":
-                    try:
-                        eye_tracker.start_tracking()
-                        logger.info("Eye tracking started")
-                        await websocket.send_json({
-                            "status": "started",
-                            "message": "Eye tracking started successfully"
-                        })
-                    except Exception as e:
-                        logger.error(f"Error starting eye tracking: {str(e)}")
-                        await websocket.send_json({
-                            "status": "error",
-                            "message": f"Failed to start eye tracking: {str(e)}"
-                        })
-                elif message == "stop":
-                    try:
-                        eye_tracker.stop_tracking()
-                        logger.info("Eye tracking stopped")
-                        await websocket.send_json({
-                            "status": "stopped",
-                            "message": "Eye tracking stopped successfully"
-                        })
-                    except Exception as e:
-                        logger.error(f"Error stopping eye tracking: {str(e)}")
-                        await websocket.send_json({
-                            "status": "error",
-                            "message": f"Failed to stop eye tracking: {str(e)}"
-                        })
-                elif isinstance(message, dict) and message.get("type") == "gaze":
-                    try:
-                        x = message.get("x", 0)
-                        y = message.get("y", 0)
-                        current_word = eye_tracker.update_gaze_position(x, y)
-                        if current_word:
-                            await websocket.send_json({
-                                "word": current_word
-                            })
-                    except Exception as e:
-                        logger.error(f"Error processing gaze data: {str(e)}")
-                else:
-                    logger.warning(f"Unknown WebSocket message: {message}")
-                    await websocket.send_json({
-                        "status": "error",
-                        "message": "Unknown message received"
-                    })
-                    
-            except WebSocketDisconnect:
-                logger.info("WebSocket connection closed")
-                break
-            except Exception as e:
-                logger.error(f"Error processing WebSocket message: {str(e)}")
-                await websocket.send_json({
-                    "status": "error",
-                    "message": str(e)
-                })
-                
-    except Exception as e:
-        logger.error(f"WebSocket connection error: {str(e)}")
-    finally:
-        if websocket in active_connections:
-            active_connections.remove(websocket)
-            logger.info("WebSocket connection removed from active connections")
+# Include routers
+app.include_router(speech_to_text.router)
 
 @app.post("/upload-pdf")
 async def upload_pdf(file: UploadFile = File(...)):
@@ -190,26 +105,8 @@ async def get_pdf(filename: str):
     return FileResponse(file_path, media_type="application/pdf")
 
 @app.get("/")
-async def read_root():
-    return {"message": "Welcome to Readibly API"}
-
-@app.post("/api/start-eye-tracking")
-async def start_eye_tracking():
-    try:
-        eye_tracker.start_tracking()
-        return JSONResponse({"status": "success"})
-    except Exception as e:
-        logger.error(f"Error starting eye tracking: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-@app.post("/api/stop-eye-tracking")
-async def stop_eye_tracking():
-    try:
-        eye_tracker.stop_tracking()
-        return JSONResponse({"status": "success"})
-    except Exception as e:
-        logger.error(f"Error stopping eye tracking: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
+async def root():
+    return {"message": "Welcome to the Readibly API"}
 
 @app.post("/api/text-to-speech")
 async def text_to_speech(text: str):
@@ -223,20 +120,11 @@ async def text_to_speech(text: str):
         logger.error(f"Error converting text to speech: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.post("/api/set-text-data")
-async def set_text_data(data: dict):
-    try:
-        eye_tracker.set_text_data(data["text"], data["positions"])
-        return JSONResponse({"status": "success"})
-    except Exception as e:
-        logger.error(f"Error setting text data: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
-
 if __name__ == "__main__":
-    # Konfigurasi SSL context
+    # Configure SSL context
     ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
     try:
-        # Generate self-signed certificate jika belum ada
+        # Generate self-signed certificate if not exists
         from OpenSSL import crypto
         from datetime import datetime, timedelta
 
@@ -268,7 +156,7 @@ if __name__ == "__main__":
         logger.error(f"Failed to setup SSL: {str(e)}")
         raise
 
-    # Jalankan server dengan SSL
+    # Run server with SSL
     uvicorn.run(
         "main:app", 
         host="0.0.0.0", 

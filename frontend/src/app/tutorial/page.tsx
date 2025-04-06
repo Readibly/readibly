@@ -3,9 +3,11 @@
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ArrowRight } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
+import Link from 'next/link';
+import AnimatedSection from '@/components/AnimatedSection';
 
 const steps = [
   {
@@ -30,6 +32,7 @@ export default function TutorialPage() {
   const [direction, setDirection] = useState(0);
   const [isLoaded, setIsLoaded] = useState(false);
   const router = useRouter();
+  const totalSteps = steps.length;
 
   useEffect(() => {
     // Trigger entrance animation after component mounts
@@ -37,11 +40,11 @@ export default function TutorialPage() {
   }, []);
 
   const nextStep = () => {
-    if (currentStep < steps.length - 1) {
+    if (currentStep < totalSteps - 1) {
       setDirection(1);
       setCurrentStep(currentStep + 1);
     } else {
-      router.push('/reader');
+      router.push('/dashboard');
     }
   };
 
@@ -91,86 +94,76 @@ export default function TutorialPage() {
   };
 
   return (
-    <motion.div 
-      className="min-h-screen bg-white py-8 px-4 sm:px-6 lg:px-8"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.5 }}
-    >
-      <motion.div 
-        className="max-w-3xl mx-auto"
-        variants={containerVariants}
-        initial="hidden"
-        animate={isLoaded ? "visible" : "hidden"}
-      >
-        <motion.div 
-          className="relative h-[400px] overflow-hidden"
-          variants={itemVariants}
-        >
-          <AnimatePresence initial={false} custom={direction}>
-            <motion.div
-              key={currentStep}
-              custom={direction}
-              variants={slideVariants}
-              initial="enter"
-              animate="center"
-              exit="exit"
-              transition={{
-                x: { type: "spring", stiffness: 300, damping: 30 },
-                opacity: { duration: 0.2 }
-              }}
-              className="absolute w-full"
-            >
-              <div className="text-center mb-6">
-                <h2 className="text-2xl font-bold text-[#2e31ce] mb-3">{steps[currentStep].title}</h2>
-                <p className="text-base text-gray-600">{steps[currentStep].description}</p>
+    <div className="min-h-screen bg-white">
+      <div className="container mx-auto px-4 py-8">
+        <AnimatedSection>
+          <div className="max-w-3xl mx-auto">
+            <div className="mb-8">
+              <h1 className="text-4xl font-bold mb-4">Welcome to Readibly</h1>
+              <p className="text-gray-600">Let's walk you through the basics</p>
+            </div>
+
+            <div className="space-y-8">
+              {currentStep === 0 && (
+                <div>
+                  <h2 className="text-2xl font-semibold mb-4">Step 1: PDF Reader</h2>
+                  <p className="text-gray-600 mb-4">
+                    Our PDF Reader helps you extract and read text from PDF documents with ease.
+                    You can upload any PDF file and our AI will help you read it.
+                  </p>
+                </div>
+              )}
+
+              {currentStep === 1 && (
+                <div>
+                  <h2 className="text-2xl font-semibold mb-4">Step 2: Speech to Text</h2>
+                  <p className="text-gray-600 mb-4">
+                    Convert your speech to text in real-time. Perfect for taking notes or
+                    transcribing meetings and lectures.
+                  </p>
+                </div>
+              )}
+
+              {currentStep === 2 && (
+                <div>
+                  <h2 className="text-2xl font-semibold mb-4">Step 3: Learning Center</h2>
+                  <p className="text-gray-600 mb-4">
+                    Access our learning templates and improve your reading skills with
+                    interactive exercises and AI-powered feedback.
+                  </p>
+                </div>
+              )}
+
+              <div className="flex justify-between items-center">
+                <Button
+                  onClick={previousStep}
+                  disabled={currentStep === 0}
+                  className="bg-gray-100 text-gray-700 hover:bg-gray-200"
+                >
+                  Previous
+                </Button>
+
+                {currentStep === totalSteps - 1 ? (
+                  <Link href="/dashboard">
+                    <Button className="bg-[#2e31ce] text-white hover:bg-[#373ad3]">
+                      Continue to Dashboard
+                      <ArrowRight className="ml-2 h-4 w-4" />
+                    </Button>
+                  </Link>
+                ) : (
+                  <Button
+                    onClick={nextStep}
+                    className="bg-[#2e31ce] text-white hover:bg-[#373ad3]"
+                  >
+                    Next
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
+                )}
               </div>
-
-              <div className="relative w-full h-[300px] rounded-lg overflow-hidden bg-gray-100">
-                <Image
-                  src={steps[currentStep].image}
-                  alt={steps[currentStep].title}
-                  fill
-                  className="object-contain"
-                />
-              </div>
-            </motion.div>
-          </AnimatePresence>
-        </motion.div>
-
-        <motion.div 
-          className="flex justify-between items-center mt-6"
-          variants={itemVariants}
-        >
-          <Button
-            onClick={previousStep}
-            disabled={currentStep === 0}
-            className="bg-gray-200 text-gray-800 hover:bg-gray-300"
-          >
-            <ChevronLeft className="mr-2 h-4 w-4" />
-            Previous
-          </Button>
-
-          <div className="flex gap-2">
-            {steps.map((_, index) => (
-              <div
-                key={index}
-                className={`w-2 h-2 rounded-full ${
-                  index === currentStep ? 'bg-[#2e31ce]' : 'bg-gray-300'
-                }`}
-              />
-            ))}
+            </div>
           </div>
-
-          <Button
-            onClick={nextStep}
-            className="bg-[#2e31ce] text-white hover:bg-[#373ad3]"
-          >
-            {currentStep === steps.length - 1 ? 'Get Started' : 'Next'}
-            <ChevronRight className="ml-2 h-4 w-4" />
-          </Button>
-        </motion.div>
-      </motion.div>
-    </motion.div>
+        </AnimatedSection>
+      </div>
+    </div>
   );
 } 

@@ -38,7 +38,7 @@ const FAQItem = ({ question, answer }: FAQItemProps) => {
 const faqs = [
   {
     question: "What is Readibly?",
-    answer: "Readibly is a web application designed to help people with dyslexia read more easily. It uses eye-tracking technology and text-to-speech features to make reading more accessible and comfortable."
+    answer: "Readibly is a SaaS application designed to help people with dyslexia read more easily. It uses eye-tracking technology and text-to-speech features to make reading more accessible and comfortable."
   },
   {
     question: "How does the eye-tracking feature work?",

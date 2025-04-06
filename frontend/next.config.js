@@ -18,11 +18,36 @@ checkCertificates();
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  webpack: (config) => {
-    config.resolve.fallback = {
-      ...config.resolve.fallback,
-      fs: false,
-    };
+  async headers() {
+    return [
+      {
+        source: '/:path*',
+        headers: [
+          {
+            key: 'Access-Control-Allow-Origin',
+            value: 'https://localhost:8000',
+          },
+          {
+            key: 'Access-Control-Allow-Methods',
+            value: 'GET, POST, PUT, DELETE, OPTIONS',
+          },
+          {
+            key: 'Access-Control-Allow-Headers',
+            value: 'Content-Type, Authorization',
+          },
+        ],
+      },
+    ];
+  },
+  webpack: (config, { isServer }) => {
+    if (!isServer) {
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        fs: false,
+        net: false,
+        tls: false,
+      };
+    }
     return config;
   },
   // Configure WebSocket to use secure connection
@@ -31,24 +56,6 @@ const nextConfig = {
       {
         source: '/ws/:path*',
         destination: 'https://localhost:8000/ws/:path*',
-      },
-    ];
-  },
-  // Add security headers
-  async headers() {
-    return [
-      {
-        source: '/:path*',
-        headers: [
-          {
-            key: 'Strict-Transport-Security',
-            value: 'max-age=31536000; includeSubDomains'
-          },
-          {
-            key: 'Content-Security-Policy',
-            value: "default-src 'self' https: 'unsafe-inline' 'unsafe-eval' https://webgazer.cs.brown.edu; media-src 'self' https:; connect-src 'self' wss: ws: https:;"
-          }
-        ],
       },
     ];
   },
