@@ -1,18 +1,12 @@
 'use client';
 
-import React, { useEffect, useState, useRef, useCallback } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 
 interface EyeTrackerProps {
   onGazePoint?: (x: number, y: number) => void;
   onDoubleBlink?: () => void;
   isEnabled: boolean;
   onWordNavigation?: (direction: 'next' | 'prev') => void;
-}
-
-interface GazePoint {
-  x: number;
-  y: number;
-  timestamp: number;
 }
 
 // Add WebGazer type to window
@@ -37,7 +31,6 @@ interface GazeData {
 }
 
 const EyeTrackerJS: React.FC<EyeTrackerProps> = ({ 
-  onGazePoint, 
   onDoubleBlink, 
   isEnabled,
   onWordNavigation 
