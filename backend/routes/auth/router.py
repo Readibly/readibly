@@ -1,12 +1,112 @@
-from fastapi import APIRouter, Depends, HTTPException, status\nfrom fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm\nfrom sqlalchemy.orm import Session\nfrom datetime import timedelta\nfrom typing import List, Optional\nfrom pydantic import BaseModel, EmailStr\nfrom database.database import SessionLocal, engine\nfrom database.models import User\nfrom .utils import verify_password, get_password_hash, create_access_token, Token, ACCESS_TOKEN_EXPIRE_MINUTES\nimport logging\n\nrouter = APIRouter(tags=[\
-auth\])\n\nlogger = logging.getLogger(__name__)\n\n# Dependency to get the database session\ndef get_db():\n    db = SessionLocal()\n    try:\n        yield db\n    finally:\n        db.close()\n\n# Pydantic models for validation\nclass UserBase(BaseModel):\n    username: str\n    email: str\n\nclass UserCreate(UserBase):\n    password: str\n\nclass UserResponse(UserBase):\n    id: int\n    \n    class Config:\n        orm_mode = True\n\noauth2_scheme = OAuth2PasswordBearer(tokenUrl=\/login\)\n\n# Helper functions\ndef get_user_by_username(db: Session, username: str):\n    return db.query(User).filter(User.username == username).first()\n\ndef get_user_by_email(db: Session, email: str):\n    return db.query(User).filter(User.email == email).first()\n\ndef create_user(db: Session, user: UserCreate):\n    hashed_password = get_password_hash(user.password)\n    db_user = User(username=user.username, email=user.email, hashed_password=hashed_password)\n    db.add(db_user)\n    db.commit()\n    db.refresh(db_user)\n    return db_user\n\n# Authentication endpoints\n@router.post(\/register\, response_model=UserResponse)\nasync def register(user: UserCreate, db: Session = Depends(get_db)):\n    db_user_by_email = get_user_by_email(db, email=user.email)\n    if db_user_by_email:\n        raise HTTPException(\n            status_code=status.HTTP_400_BAD_REQUEST, detail=\Email
-already
-registered\\n        )\n        \n    db_user_by_username = get_user_by_username(db, username=user.username)\n    if db_user_by_username:\n        raise HTTPException(\n            status_code=status.HTTP_400_BAD_REQUEST, detail=\Username
-already
-exists\\n        )\n    \n    return create_user(db=db, user=user)\n\n@router.post(\/login\, response_model=Token)\nasync def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):\n    user = get_user_by_username(db, username=form_data.username)\n    if not user or not verify_password(form_data.password, user.hashed_password):\n        raise HTTPException(\n            status_code=status.HTTP_401_UNAUTHORIZED,\n            detail=\Incorrect
-username
-or
-password\,\n            headers={\WWW-Authenticate\: \Bearer\},\n        )\n    \n    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)\n    access_token = create_access_token(\n        data={\sub\: user.username}, expires_delta=access_token_expires\n    )\n    return {\access_token\: access_token, \token_type\: \bearer\}\n\n# Current user dependency\nasync def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):\n    from jose import JWTError, jwt\n    credentials_exception = HTTPException(\n        status_code=status.HTTP_401_UNAUTHORIZED,\n        detail=\Could
-not
-validate
-credentials\,\n        headers={\WWW-Authenticate\: \Bearer\},\n    )\n    try:\n        from .utils import SECRET_KEY, ALGORITHM\n        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])\n        username: str = payload.get(\sub\)\n        if username is None:\n            raise credentials_exception\n    except JWTError:\n        raise credentials_exception\n        \n    user = get_user_by_username(db, username=username)\n    if user is None:\n        raise credentials_exception\n    return user\n\n@router.get(\/me\, response_model=UserResponse)\nasync def read_users_me(current_user: User = Depends(get_current_user)):\n    return current_user
+from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from sqlalchemy.orm import Session
+from datetime import timedelta
+from typing import List, Optional
+from pydantic import BaseModel, EmailStr
+from database.database import SessionLocal, engine
+from database.models import User
+from .utils import verify_password, get_password_hash, create_access_token, Token, ACCESS_TOKEN_EXPIRE_MINUTES
+import logging
+
+router = APIRouter(tags=["auth"])
+
+logger = logging.getLogger(__name__)
+
+# Dependency to get the database session
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
+# Pydantic models for validation
+class UserBase(BaseModel):
+    username: str
+    email: str
+
+class UserCreate(UserBase):
+    password: str
+
+class UserResponse(UserBase):
+    id: int
+    
+    class Config:
+        orm_mode = True
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login")
+
+# Helper functions
+def get_user_by_username(db: Session, username: str):
+    return db.query(User).filter(User.username == username).first()
+
+def get_user_by_email(db: Session, email: str):
+    return db.query(User).filter(User.email == email).first()
+
+def create_user(db: Session, user: UserCreate):
+    hashed_password = get_password_hash(user.password)
+    db_user = User(username=user.username, email=user.email, hashed_password=hashed_password)
+    db.add(db_user)
+    db.commit()
+    db.refresh(db_user)
+    return db_user
+
+# Authentication endpoints
+@router.post("/register", response_model=UserResponse)
+async def register(user: UserCreate, db: Session = Depends(get_db)):
+    db_user_by_email = get_user_by_email(db, email=user.email)
+    if db_user_by_email:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Email already registered"
+        )
+        
+    db_user_by_username = get_user_by_username(db, username=user.username)
+    if db_user_by_username:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Username already exists"
+        )
+    
+    return create_user(db=db, user=user)
+
+@router.post("/login", response_model=Token)
+async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
+    user = get_user_by_username(db, username=form_data.username)
+    if not user or not verify_password(form_data.password, user.hashed_password):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect username or password",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    
+    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token = create_access_token(
+        data={"sub": user.username}, expires_delta=access_token_expires
+    )
+    return {"access_token": access_token, "token_type": "bearer"}
+
+# Current user dependency
+async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
+    from jose import JWTError, jwt
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    try:
+        from .utils import SECRET_KEY, ALGORITHM
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        username: str = payload.get("sub")
+        if username is None:
+            raise credentials_exception
+    except JWTError:
+        raise credentials_exception
+        
+    user = get_user_by_username(db, username=username)
+    if user is None:
+        raise credentials_exception
+    return user
+
+@router.get("/me", response_model=UserResponse)
+async def read_users_me(current_user: User = Depends(get_current_user)):
+    return current_user

@@ -1,12 +1,13 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import Link from 'next/link';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 export default function RegisterPage() {
   const [formData, setFormData] = useState({
@@ -16,7 +17,17 @@ export default function RegisterPage() {
     confirmPassword: ''
   });
   const [error, setError] = useState('');
-  const { register, loading } = useAuth();
+  const { register, loading, isAuthenticated } = useAuth();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectPath = searchParams.get('redirect') || '/dashboard';
+
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      router.push(redirectPath);
+    }
+  }, [isAuthenticated, redirectPath, router]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -43,7 +54,7 @@ export default function RegisterPage() {
     
     try {
       await register(formData.username, formData.email, formData.password);
-      // Redirect is handled in the auth context
+      // Redirect is handled by the useEffect above
     } catch (err: any) {
       setError(err.message || 'Registration failed');
     }
