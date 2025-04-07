@@ -1,1 +1,92 @@
-backend/venv/
+# Python backend
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
+venv/
+.venv/
+
+# Database
+backend/database.db
+*.db
+*.sqlite3
+
+# Certificates and keys
+backend/server.crt
+backend/server.key
+*.pem
+*.key
+*.crt
+
+# Next.js frontend
+.next/
+out/
+.vercel/
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+.DS_Store
+frontend/.next/
+frontend/out/
+frontend/node_modules/
+frontend/build
+
+# Python cache files
+backend/__pycache__/
+backend/**/__pycache__/
+backend/database/__pycache__/
+backend/routes/__pycache__/
+backend/routes/auth/__pycache__/
+*.py[cod]
+*$py.class
+backend/main.cpython-*.pyc
+backend/database/database.cpython-*.pyc
+backend/database/models.cpython-*.pyc
+backend/routes/auth/router.cpython-*.pyc
+backend/routes/auth/utils.cpython-*.pyc
+backend/pdf_parser.cpython-*.pyc
+backend/speech_to_text.cpython-*.pyc
+backend/text_to_speech.cpython-*.pyc
+
+# IDE/Editor specific files
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# Misc
+.coverage
+coverage/
+.pytest_cache/
+htmlcov/
