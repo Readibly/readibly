@@ -13,6 +13,12 @@ import PyPDF2
 import io
 import ssl
 from routes import speech_to_text
+from routes.auth import router as auth_router
+from database.database import engine
+from database import models
+
+# Initialize database
+models.Base.metadata.create_all(bind=engine)
 
 logging.basicConfig(
     level=logging.DEBUG,
@@ -42,6 +48,7 @@ if not os.path.exists(UPLOAD_DIR):
 
 # Include routers
 app.include_router(speech_to_text.router)
+app.include_router(auth_router, prefix="/auth")
 
 @app.post("/upload-pdf")
 async def upload_pdf(file: UploadFile = File(...)):
@@ -165,4 +172,4 @@ if __name__ == "__main__":
         ssl_certfile="server.crt",
         reload=True,
         log_level="debug"
-    ) 
+    )
