@@ -1,5 +1,3 @@
-On dev
-
 To run on your local server:
 
 To run the backend the developer use Python 3.11.9 (recommended) or you can use Python 3.8 above
